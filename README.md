@@ -93,6 +93,3 @@ smart-home-ids/
 - Single-node detection only; no distributed/federated detection across
   multiple home gateways.
 
-## Author
-
-Harsh Viswanath Pillai — B.Tech Cybersecurity, Jain University
