@@ -1,0 +1,68 @@
+name: CI — Smart Home NIDS
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install ruff mypy
+          pip install -r requirements.txt
+
+      - name: Ruff lint
+        run: ruff check src/ dashboard/ config/ tests/ app.py --ignore E501
+
+      - name: Mypy type check (non-strict)
+        run: mypy src/predict.py src/database.py src/alerts.py --ignore-missing-imports --no-strict-optional
+        continue-on-error: true
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run tests
+        run: python -m pytest tests/ -v --tb=short -x
+        env:
+          PYTHONPATH: .
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t smart-home-nids:test .
+
+      - name: Verify image
+        run: docker run --rm smart-home-nids:test python -c "from src.predict import NIDSPredictor; print('OK')"

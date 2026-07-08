@@ -1,0 +1,29 @@
+# ── Core ML ──────────────────────────────────────────────────
+pandas
+numpy
+scikit-learn
+imbalanced-learn
+joblib
+
+# ── Visualization ────────────────────────────────────────────
+matplotlib
+seaborn
+plotly
+
+# ── Dashboard ────────────────────────────────────────────────
+streamlit
+streamlit-autorefresh
+
+# ── Explainability ───────────────────────────────────────────
+shap
+
+# ── Alerts & Notifications ───────────────────────────────────
+plyer
+python-dotenv
+requests
+
+# ── Progress Bars ────────────────────────────────────────────
+tqdm
+
+# ── Testing ──────────────────────────────────────────────────
+pytest
