@@ -31,8 +31,7 @@ tqdm>=4.66
 # ── Testing ───────────────────────────────────────────────────────────────────
 pytest>=7.4
 
-# ── Live Capture (optional — required only for src/capture/ MITM mode) ───────
-# Install separately when using the Live Capture tab with ARP spoofing:
-#   pip install scapy netifaces
-# scapy>=2.5
-# netifaces>=0.11
+# ── Live Capture ──────────────────────────────────────────────────────────────
+# Required for the Live Capture tab with packet sniffing and ARP spoofing
+scapy>=2.5
+netifaces>=0.11
