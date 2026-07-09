@@ -142,7 +142,7 @@ def render_sidebar() -> str:
         st.markdown("---")
         st.markdown(
             f"<p style='text-align:center; color:{COLORS['text_secondary']}; font-size:0.65rem;'>"
-            f"Smart Home NIDS v1.0<br>B.Tech Cybersecurity Project</p>",
+            f"Smart Home NIDS v1.0</p>",
             unsafe_allow_html=True,
         )
 
