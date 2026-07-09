@@ -123,20 +123,20 @@ def render(db: NIDSDatabase, predictor: NIDSPredictor, alert_mgr: AlertManager) 
     )
 
     # ── Input Mode Tabs ──────────────────────────────────────────────────
-    tab_manual, tab_simulate, tab_live = st.tabs([
-        "✏️ Manual Input",
-        "🎲 Simulate Traffic",
+    tab_live, tab_simulate, tab_manual = st.tabs([
         "📡 Live Capture",
+        "🎲 Simulate Traffic",
+        "✏️ Manual Input",
     ])
 
-    with tab_manual:
-        _render_manual_input(db, predictor, alert_mgr)
+    with tab_live:
+        _render_live_capture(db, predictor, alert_mgr)
 
     with tab_simulate:
         _render_simulation(db, predictor, alert_mgr)
 
-    with tab_live:
-        _render_live_capture(db, predictor, alert_mgr)
+    with tab_manual:
+        _render_manual_input(db, predictor, alert_mgr)
 
     # ── Live Feed ────────────────────────────────────────────────────────
     section_header("📡 Recent Predictions Feed")
