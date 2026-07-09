@@ -1,95 +1,52 @@
 # 🛡️ Smart Home Network Intrusion Detection System
 
-A machine-learning based Network Intrusion Detection System (NIDS) that monitors
-flow-level traffic from smart home IoT devices and classifies it as benign or
-one of four attack types, with a live Streamlit monitoring dashboard.
+A machine-learning-based NIDS that classifies real home-network traffic
+(IoT devices, laptops, phones, printers) into 9 attack categories using a
+Random Forest trained on the **CIC IoT-2023** dataset, with a live Streamlit
+dashboard, SHAP explainability, multi-channel alerting, and an ARP-spoof
+live capture engine.
 
-## Problem Statement
+---
 
-Consumer IoT devices (cameras, smart bulbs, thermostats, locks) are frequently
-compromised due to weak default credentials, open legacy ports (e.g. Telnet),
-and lack of built-in security monitoring — as demonstrated by real-world
-botnets like Mirai. This project builds a lightweight, ML-based detection
-layer that a home router or gateway could run to flag suspicious device
-behavior in real time.
+## 👉 The real system lives in [`smart-home-nids/`](smart-home-nids/)
 
-## Detected Attack Classes
+Everything production-quality is there — see its
+**[detailed README](smart-home-nids/README.md)** for architecture, setup,
+dataset stats, feature list, quick-start, Docker instructions, and CI.
 
-| Class | Description | Real-world signature modeled |
-|---|---|---|
-| BENIGN | Normal IoT device traffic | Regular, low-volume, standard ports (443/MQTT-1883/DNS-53) |
-| DDoS | Denial of service flood | Very high packet count, short duration, high byte rate |
-| Port Scan | Reconnaissance sweep | Near-instant flows across many destination ports, high SYN ratio |
-| Brute Force | Credential-stuffing attempts | Repeated short connections to admin ports (22/23/8080) |
-| Botnet C2 | Command-and-control beaconing (Mirai-style) | Long-lived, low-volume, periodic traffic to unusual ports |
+---
 
-## Architecture
+## Repository layout
 
 ```
-Traffic simulator (flow generator)
-        │
-Feature extraction (8 flow-level features)
-        │
-Random Forest Classifier (150 trees, balanced class weights)
-        │
-SQLite logging (every classified flow + severity)
-        │
-Streamlit dashboard (live feed, attack distribution, per-device risk)
+.
+├── smart-home-nids/        ← Active production system (start here)
+│   ├── src/                  ML pipeline + live capture engine
+│   ├── dashboard/            Streamlit pages
+│   ├── config/               Pipeline & runtime configuration
+│   ├── tests/                pytest test suite
+│   ├── Dockerfile
+│   └── README.md             ← Full documentation
+│
+└── legacy-prototype/       ← Archived initial proof-of-concept (not active)
+    ├── src/                  Synthetic-data generator, minimal dashboard
+    └── README.md             ← Why it was superseded
 ```
 
-## Features Used
+> **`legacy-prototype/`** was the original prototype built on simulated
+> traffic with 4 attack classes and 8 features. It is preserved for history
+> but is **not maintained** and should not be used as a reference.
 
-`device, protocol, dst_port, flow_duration_ms, packet_count, byte_rate_bps,
-flag_syn_ratio, unique_dst_ips_per_src`
+---
 
-These mirror the flow-level feature schema produced by CICFlowMeter (the tool
-behind the CIC-IoT-2023 dataset), so the pipeline is compatible with real
-captured traffic if swapped in.
-
-## Model Performance
-
-- **Accuracy: 99.82%** on held-out test set (20% split, stratified)
-- Per-class precision/recall/F1 all ≥0.99
-- Feature importance analysis shows `flow_duration_ms`, `dst_port`, and
-  `flag_syn_ratio` as the strongest predictors — consistent with published
-  IDS literature on scan/flood detection signatures
-
-## Tech Stack
-
-Python · scikit-learn (Random Forest) · pandas/numpy · SQLite · Streamlit · Plotly
-
-## Setup & Run
+## Quick start
 
 ```bash
+cd smart-home-nids
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python src/generate_dataset.py   # builds data/iot_traffic.csv
-python src/train_model.py         # trains + evaluates + saves model
-streamlit run src/dashboard.py    # launches live dashboard
+streamlit run app.py
 ```
 
-## Project Structure
-
-```
-smart-home-ids/
-├── data/               # generated traffic dataset
-├── models/             # trained RF model + label encoders
-├── logs/               # SQLite detection database
-├── src/
-│   ├── generate_dataset.py   # synthetic flow generator w/ realistic noise
-│   ├── train_model.py        # RF training + evaluation
-│   ├── db.py                  # SQLite logging layer
-│   └── dashboard.py           # Streamlit live monitoring UI
-├── requirements.txt
-└── README.md
-```
-
-## Limitations & Future Work
-
-- Traffic is simulated with realistic statistical distributions rather than
-  captured live; swapping in CIC-IoT-2023 or live Scapy capture would be the
-  next step toward production readiness.
-- No deep learning / sequence modeling (e.g. LSTM on packet sequences) —
-  a deliberate tradeoff for interpretability and fast training.
-- Single-node detection only; no distributed/federated detection across
-  multiple home gateways.
-
+See [`smart-home-nids/README.md`](smart-home-nids/README.md) for the full
+setup guide including data preparation and model training.

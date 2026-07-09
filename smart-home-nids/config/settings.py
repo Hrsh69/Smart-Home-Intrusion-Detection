@@ -1,5 +1,13 @@
 """Runtime settings loaded from environment / .env file.
 
+This file owns all *deployment-specific* and *secret* configuration:
+alert channel credentials (SMTP, Telegram), dashboard behaviour, and
+the DB path. Values are read from .env at startup via python-dotenv.
+
+For *static* pipeline decisions (feature selection, scaler choice, data
+paths, split ratio) see config/config.py, which lives entirely in source
+control and has no secrets.
+
 Usage:
     from config.settings import SETTINGS
     print(SETTINGS.SMTP_HOST)

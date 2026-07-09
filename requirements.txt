@@ -1,3 +1,7 @@
+# The active project is in smart-home-nids/
+# See smart-home-nids/requirements.txt for the real dependency list.
+#
+# This minimal set is only for running the archived legacy-prototype/ scripts:
 pandas>=2.0
 numpy>=1.24
 scikit-learn>=1.3

@@ -58,6 +58,13 @@ Built on the **CIC IoT-2023** dataset (Canadian Institute for Cybersecurity) wit
 - 🧪 Comprehensive test suite (pytest)
 - 📝 PEP 8 compliant, type-hinted, docstrings throughout
 
+### Live Capture *(in progress — Phase 2–4)*
+- 🕵️ **ARP spoof MITM engine** (`src/capture/arp_spoof.py`) — routes target devices' traffic through this machine for capture; mandatory `--targets` flag, atexit/signal ARP restore, `--dry-run` mode
+- 📡 **Packet sniffer** (`src/capture/sniffer.py`) — Scapy BPF capture (IP/TCP/UDP/ICMP) → thread-safe queue
+- 🔀 **Flow assembler** (`src/capture/flow_assembler.py`) — bidirectional 5-tuple flows with 120 s idle timeout (CICFlowMeter default), extracts all 18 training-schema features
+- ⚙️ **Pipeline** (`src/capture/pipeline.py`) — orchestrates spoofer → sniffer → assembler → predictor → DB → alerts
+- The Live Capture tab in the dashboard (`dashboard/monitoring.py`) is implemented; **not yet wired into `app.py`** pending Phase 5 hardening (CAP\_NET\_RAW capabilities, systemd service)
+
 ---
 
 ## 📁 Project Structure
@@ -66,28 +73,33 @@ Built on the **CIC IoT-2023** dataset (Canadian Institute for Cybersecurity) wit
 smart-home-nids/
 ├── app.py                          # Streamlit entry point
 ├── config/
-│   ├── config.py                   # Pipeline configuration
-│   ├── settings.py                 # Runtime settings (.env)
-│   └── attack_mapping.py           # CIC IoT-2023 label mapping
+│   ├── config.py                   # Pipeline & hyperparameter config
+│   ├── settings.py                 # Runtime settings (loaded from .env)
+│   └── attack_mapping.py           # CIC IoT-2023 label → category mapping
 ├── src/
-│   ├── preprocessing.py            # Data preprocessing pipeline
-│   ├── train_model.py              # Model training
-│   ├── predict.py                  # Prediction engine
-│   ├── explainability.py           # SHAP integration
+│   ├── predict.py                  # Prediction engine (18 features, 9 classes)
+│   ├── explainability.py           # SHAP TreeExplainer integration
 │   ├── database.py                 # SQLite persistence layer
 │   ├── alerts.py                   # Multi-channel alerting
-│   ├── chunk_sampling.py           # Memory-efficient data sampling
-│   ├── cleaning.py                 # Data cleaning
+│   ├── preprocessing.py            # End-to-end data preprocessing pipeline
+│   ├── train_model.py              # Model training + evaluation
+│   ├── chunk_sampling.py           # Memory-efficient CIC data sampling
+│   ├── cleaning.py                 # Data cleaning & validation
 │   ├── encoding.py                 # Categorical encoding
 │   ├── feature_engineering.py      # Feature creation
 │   ├── feature_selection.py        # Feature selection (RF + MI)
-│   ├── scaling.py                  # RobustScaler
+│   ├── scaling.py                  # RobustScaler pipeline
 │   ├── split_data.py               # Stratified train/test split
-│   └── utils.py                    # Utility functions
+│   ├── utils.py                    # Utility functions
+│   └── capture/                    # ⚠️ In-progress live capture module
+│       ├── arp_spoof.py            #   ARP MITM engine
+│       ├── sniffer.py              #   Scapy packet sniffer → queue
+│       ├── flow_assembler.py       #   5-tuple flow tracker → 18 features
+│       └── pipeline.py             #   Orchestration (spoof+sniff+predict+log)
 ├── dashboard/
 │   ├── styles.py                   # Dark theme CSS + Plotly theming
 │   ├── home.py                     # 📊 Overview page
-│   ├── monitoring.py               # 🔴 Live Monitor page
+│   ├── monitoring.py               # 🔴 Live Monitor (manual / simulate / capture)
 │   ├── analysis.py                 # 📈 Attack Analysis page
 │   ├── devices.py                  # 🖥️ Device Stats page
 │   ├── logs.py                     # 📋 History & Logs page
@@ -96,7 +108,9 @@ smart-home-nids/
 │   ├── test_predict.py             # Prediction engine tests
 │   ├── test_database.py            # Database layer tests
 │   ├── test_model.py               # Model validation tests
-│   └── test_alerts.py              # Alert system tests
+│   ├── test_alerts.py              # Alert system tests
+│   ├── test_manual_input.py        # Manual prediction smoke-test script
+│   └── test_simulation.py          # Simulation smoke-test script
 ├── data/
 │   ├── raw/                        # Place CIC IoT-2023 CSVs here
 │   └── processed/                  # Pipeline outputs
@@ -107,7 +121,7 @@ smart-home-nids/
 ├── docker-compose.yml              # Docker Compose
 ├── .github/workflows/ci.yml        # GitHub Actions CI
 ├── .env.example                    # Environment template
-├── requirements.txt                # Python dependencies
+├── requirements.txt                # Python dependencies (pinned)
 └── README.md                       # This file
 ```
 
@@ -118,8 +132,8 @@ smart-home-nids/
 ### 1. Clone & Setup
 
 ```bash
-git clone https://github.com/yourusername/smart-home-nids.git
-cd smart-home-nids
+git clone https://github.com/Hrsh69/Smart-Home-Intrusion-Detection.git
+cd Smart-Home-Intrusion-Detection/smart-home-nids
 python3 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt

@@ -1,4 +1,9 @@
-"""Central configuration for the lightweight preprocessing pipeline."""
+"""Pipeline & hyperparameter configuration (paths, feature selection, scaler, split ratio).
+
+This file owns all *static* pipeline decisions that live in source control.
+For *runtime* secrets and environment-specific settings (SMTP, Telegram,
+dashboard refresh interval, etc.) see config/settings.py, which reads from .env.
+"""
 
 from __future__ import annotations
 
