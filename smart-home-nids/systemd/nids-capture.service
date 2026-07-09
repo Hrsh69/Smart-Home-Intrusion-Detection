@@ -1,0 +1,19 @@
+[Unit]
+Description=Smart Home NIDS Live Capture Pipeline
+After=network.target
+
+[Service]
+Type=simple
+User=nids
+Group=nids
+WorkingDirectory=/opt/smart-home-nids
+ExecStart=/opt/smart-home-nids/.venv/bin/python app.py --server.address=127.0.0.1
+Restart=on-failure
+RestartSec=5
+# Allow Python to capture raw packets without running as root
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
+SecureBits=keep-caps
+
+[Install]
+WantedBy=multi-user.target

@@ -64,7 +64,8 @@ class NIDSDatabase:
                     confidence  REAL,
                     severity    TEXT,
                     features_json TEXT,
-                    device_id   TEXT
+                    device_id   TEXT,
+                    model_version TEXT
                 );
 
                 CREATE TABLE IF NOT EXISTS devices (
@@ -109,6 +110,12 @@ class NIDSDatabase:
                 CREATE INDEX IF NOT EXISTS idx_alerts_ack ON alerts(acknowledged);
             """)
 
+            # Migration: add model_version to detections if it doesn't exist
+            cur.execute("PRAGMA table_info(detections)")
+            columns = [col["name"] for col in cur.fetchall()]
+            if "model_version" not in columns:
+                cur.execute("ALTER TABLE detections ADD COLUMN model_version TEXT")
+
     # ── Detections ──────────────────────────────────────────────────────────
 
     def insert_detection(
@@ -122,6 +129,7 @@ class NIDSDatabase:
         protocol: Optional[str] = None,
         device_id: Optional[str] = None,
         timestamp: Optional[str] = None,
+        model_version: Optional[str] = None,
     ) -> int:
         """Insert a detection record and return its ID."""
         ts = timestamp or datetime.now().isoformat()
@@ -131,10 +139,10 @@ class NIDSDatabase:
             cur.execute(
                 """INSERT INTO detections
                    (timestamp, source_ip, dst_ip, protocol, prediction,
-                    confidence, severity, features_json, device_id)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    confidence, severity, features_json, device_id, model_version)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (ts, source_ip, dst_ip, protocol, prediction,
-                 confidence, severity, features_json, device_id),
+                 confidence, severity, features_json, device_id, model_version),
             )
             det_id = cur.lastrowid
 

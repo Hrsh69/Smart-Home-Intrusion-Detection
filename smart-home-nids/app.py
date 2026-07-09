@@ -114,7 +114,7 @@ def render_sidebar() -> str:
                         </span>
                     </div>
                     <p style="font-size:0.7rem; color:{COLORS['text_secondary']}; margin:0;">
-                        RF Classifier • {len(predictor.feature_names)} features • {len(predictor.class_names)} classes
+                        RF Classifier ({predictor.model_version}) • {len(predictor.feature_names)} features • {len(predictor.class_names)} classes
                     </p>
                 </div>
                 """,

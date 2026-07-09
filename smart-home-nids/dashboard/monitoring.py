@@ -246,6 +246,7 @@ def _render_manual_input(
             source_ip=src_ip or None,
             dst_ip=dst_ip or None,
             device_id=device_id or None,
+            model_version=predictor.model_version,
         )
         alert_mgr.process_alert(
             det_id, result.label, result.confidence, result.severity, src_ip or None
@@ -346,6 +347,7 @@ def _run_simulation(
             features=features,
             source_ip=src_ip,
             device_id=dev_id,
+            model_version=predictor.model_version,
         )
         alert_mgr.process_alert(
             det_id, result.label, result.confidence, result.severity, src_ip

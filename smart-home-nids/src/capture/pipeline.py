@@ -195,6 +195,7 @@ class CapturePipeline:
                     features=features,
                     source_ip=None,   # populated by flow if src_ip tracked
                     protocol=str(int(features.get("protocol_type", 0))),
+                    model_version=self.predictor.model_version,
                 )
 
                 # Send alerts

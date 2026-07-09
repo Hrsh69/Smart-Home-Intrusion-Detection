@@ -251,7 +251,22 @@ def run_training() -> dict:
     # Save model
     model_path = CONFIG.MODELS_DIR / "rf_model.pkl"
     joblib.dump(model, model_path)
-    logger.info("Model saved: %s", model_path)
+
+    import hashlib
+    from datetime import datetime, timezone
+    with open(model_path, "rb") as f:
+        file_hash = hashlib.sha256(f.read()).hexdigest()
+
+    version_info = {
+        "trained_at": datetime.now(timezone.utc).isoformat(),
+        "sha256": file_hash,
+        "n_features": int(X_train.shape[1]),
+        "n_classes": len(label_encoder.classes_)
+    }
+    version_path = CONFIG.MODELS_DIR / "model_version.json"
+    version_path.write_text(json.dumps(version_info, indent=2))
+
+    logger.info("Model saved: %s (version hash %s)", model_path, file_hash[:8])
 
     # Evaluate
     logger.info("Evaluating on test set...")
