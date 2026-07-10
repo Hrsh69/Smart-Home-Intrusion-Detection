@@ -30,6 +30,7 @@ Usage:
 
 from __future__ import annotations
 
+import collections
 import logging
 import queue
 import threading
@@ -79,6 +80,7 @@ class CapturePipeline:
         self._packet_queue: queue.Queue = queue.Queue(maxsize=20_000)
         self._flow_queue: queue.Queue = queue.Queue(maxsize=5_000)
         self.result_queue: queue.Queue = result_queue or queue.Queue(maxsize=1_000)
+        self.packet_log: collections.deque = collections.deque(maxlen=1000)
 
         # Component instances
         self._spoofer = None
@@ -132,6 +134,7 @@ class CapturePipeline:
         self._sniffer = PacketSniffer(
             iface=self.iface,
             packet_queue=self._packet_queue,
+            packet_log=self.packet_log,
             max_queue_size=20_000,
         )
         self._sniffer.start()
@@ -170,6 +173,22 @@ class CapturePipeline:
     @property
     def is_running(self) -> bool:
         return not self._stop_event.is_set()
+
+    @property
+    def sniffer_error(self) -> Optional[str]:
+        return self._sniffer.error_message if self._sniffer else None
+
+    @property
+    def packets_captured(self) -> int:
+        return self._sniffer.packets_captured if self._sniffer else 0
+
+    @property
+    def packets_per_second(self) -> float:
+        return self._sniffer.packets_per_second if self._sniffer else 0.0
+
+    @property
+    def bytes_per_second(self) -> float:
+        return self._sniffer.bytes_per_second if self._sniffer else 0.0
 
     # ── Prediction loop ───────────────────────────────────────────────────────
 

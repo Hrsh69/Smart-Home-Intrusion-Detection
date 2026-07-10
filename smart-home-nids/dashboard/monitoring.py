@@ -417,7 +417,13 @@ def _render_live_capture(
     alert_mgr: AlertManager,
 ) -> None:
     """Live Scapy packet capture tab."""
-    from src.capture.sniffer import list_interfaces
+    from src.capture.sniffer import PacketSniffer, list_interfaces
+
+    # ── Privilege check (once per session) ────────────────
+    if "has_capture_privilege" not in st.session_state:
+        st.session_state.has_capture_privilege = PacketSniffer.check_capture_permission()
+
+    has_priv = st.session_state.has_capture_privilege
 
     # ── Auto-detect network info ──────────────────────────
     ifaces = list_interfaces()
@@ -506,16 +512,19 @@ def _render_live_capture(
     targets = [t.strip() for t in targets_raw.split(",") if t.strip()] if targets_raw else []
 
     # ── Privilege notice ──────────────────────────────────
-    st.markdown(
-        f"""
-        <div class="nids-warn-banner" style="font-size:0.78rem;">
-            Requires elevated privileges. Run with
-            <code style="color:{COLORS['text_primary']}">sudo streamlit run app.py</code>
-            or grant <code style="color:{COLORS['text_primary']}">CAP_NET_RAW</code> capabilities.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    if not has_priv:
+        st.markdown(
+            f"""
+            <div class="nids-warn-banner" style="font-size:0.85rem; border-color:{COLORS['accent_red']};">
+                <strong>Capture Unavailable: Permission Denied</strong><br>
+                This process lacks raw socket capabilities. To fix this, run Streamlit with sudo:<br>
+                <code style="color:{COLORS['text_primary']}; margin-top:4px; display:inline-block;">
+                sudo .venv/bin/streamlit run app.py
+                </code>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     # ── Start / Stop controls ────────────────────────────
     pipeline_key = "live_capture_pipeline"
@@ -524,8 +533,15 @@ def _render_live_capture(
     pipeline = st.session_state.get(pipeline_key)
     is_running = pipeline is not None and pipeline.is_running
 
+    # Surface sniffer errors (e.g. interface went down)
+    if is_running and pipeline.sniffer_error:
+        st.error(pipeline.sniffer_error)
+        pipeline.stop()
+        st.session_state[pipeline_key] = None
+        is_running = False
+
     with col_start:
-        start_disabled = is_running
+        start_disabled = is_running or not has_priv
         if st.button("▶ Start Capture", disabled=start_disabled, key="live_start",
                      type="primary"):
             try:
@@ -557,6 +573,7 @@ def _render_live_capture(
 
     with col_status:
         if is_running:
+            kbps = pipeline.bytes_per_second / 1024
             st.markdown(
                 f"""
                 <div style="display:flex; align-items:center; gap:8px; margin-top:0.5rem;">
@@ -567,8 +584,9 @@ def _render_live_capture(
                 </div>
                 <div style="color:{COLORS['text_muted']}; font-size:0.78rem;
                             font-family:'JetBrains Mono',monospace; margin-top:4px;">
-                    flows: {pipeline.flows_classified} &nbsp;·&nbsp;
-                    threats: {pipeline.threats_detected}
+                    {pipeline.packets_captured:,} pkts &nbsp;·&nbsp;
+                    {pipeline.packets_per_second:.0f} pps &nbsp;·&nbsp;
+                    {kbps:.1f} KB/s
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -583,6 +601,54 @@ def _render_live_capture(
     # ── Live results feed ────────────────────────────────
     if is_running:
         st.markdown("---")
+        
+        # 1. Real-time packet table
+        st.markdown("**Live Packets**")
+        display_filter = st.text_input(
+            "Display Filter", 
+            placeholder="e.g., DNS, TCP, 192.168.1.5", 
+            key="live_pkt_filter"
+        ).strip().lower()
+
+        # Thread-safe snapshot of the deque
+        pkt_log_snapshot = list(pipeline.packet_log)
+        
+        if pkt_log_snapshot:
+            # Filter if needed
+            if display_filter:
+                pkt_log_snapshot = [
+                    p for p in pkt_log_snapshot
+                    if display_filter in p["proto"].lower() 
+                    or display_filter in p["src"].lower() 
+                    or display_filter in p["dst"].lower()
+                    or display_filter in p["info"].lower()
+                ]
+            
+            # Show newest first
+            pkt_log_snapshot.reverse()
+            
+            df_pkts = pd.DataFrame(pkt_log_snapshot)
+            
+            # Style the Protocol column
+            st.dataframe(
+                df_pkts,
+                use_container_width=True,
+                hide_index=True,
+                height=300,
+                column_config={
+                    "no": st.column_config.NumberColumn("#", width="small"),
+                    "time": st.column_config.TextColumn("Time", width="small"),
+                    "src": st.column_config.TextColumn("Source", width="medium"),
+                    "dst": st.column_config.TextColumn("Destination", width="medium"),
+                    "proto": st.column_config.TextColumn("Protocol", width="small"),
+                    "length": st.column_config.NumberColumn("Length", width="small"),
+                    "info": st.column_config.TextColumn("Info", width="large"),
+                }
+            )
+        else:
+            st.info("Listening for packets...")
+
+        st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("**Classified Flows**")
 
         live_results_key = "live_capture_results"
@@ -622,7 +688,7 @@ def _render_live_capture(
 
         try:
             from streamlit_autorefresh import st_autorefresh
-            st_autorefresh(interval=3000, key="live_autorefresh")
+            st_autorefresh(interval=1000, key="live_autorefresh")
         except ImportError:
             st.caption("Install streamlit-autorefresh for automatic updates.")
 
