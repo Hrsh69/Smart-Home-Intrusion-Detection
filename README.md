@@ -14,8 +14,8 @@ Built on the **CIC IoT-2023** dataset (Canadian Institute for Cybersecurity) wit
 ├──────────────┬──────────────┬──────────────┬────────────────────────┤
 │   Data Layer │   ML Engine  │  App Layer   │      Dashboard         │
 │              │              │              │                        │
-│  CIC IoT-23 │ preprocess   │  database.py │  📊 Overview           │
-│  CSV files   │ train_model  │  alerts.py   │  🔴 Live Monitor      │
+│  CIC IoT-23 │ preprocess   │  database.py │  📊 Overview            │
+│  CSV files   │ train_model  │  alerts.py   │  🔴 Live Monitor       │
 │  processed/  │ predict.py   │  .env config │  📈 Analysis           │
 │  SQLite DB   │ explainab.   │              │  🖥️ Devices            │
 │              │              │              │  📋 Logs               │
