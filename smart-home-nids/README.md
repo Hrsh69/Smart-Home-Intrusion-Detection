@@ -261,15 +261,3 @@ python -m pytest tests/ -v
 | Testing | pytest |
 
 ---
-
-## 📄 License
-
-This project is developed as a **B.Tech Cybersecurity final-year project** for educational purposes.
-
----
-
-## 👤 Author
-
-**Harsh** — B.Tech Cybersecurity
-
-Built with ❤️ using Python, scikit-learn, Streamlit, and the CIC IoT-2023 dataset.
