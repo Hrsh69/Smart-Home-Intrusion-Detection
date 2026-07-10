@@ -1,7 +1,9 @@
 """Dark-themed CSS and Plotly layout helpers for the NIDS dashboard.
 
-Provides inject_css() to style the entire Streamlit app with a modern
-glassmorphism dark theme, plus consistent Plotly chart theming.
+Provides inject_css() to style the entire Streamlit app with a refined
+dark theme that avoids the "AI-generated template" look — asymmetric
+spacing, muted accents with selective pops, organic border radii, and
+restrained gradient use.
 """
 
 from __future__ import annotations
@@ -9,26 +11,31 @@ from __future__ import annotations
 import streamlit as st
 
 # ── Color Palette ────────────────────────────────────────────────────────────
+# Muted, intentional tones — avoid the saturated cyan/purple "AI look."
 COLORS = {
-    "bg_primary": "#0e1117",
-    "bg_secondary": "#1a1f2e",
-    "bg_card": "rgba(26, 31, 46, 0.85)",
-    "border": "rgba(99, 102, 241, 0.25)",
+    "bg_primary": "#0b0f19",
+    "bg_secondary": "#131825",
+    "bg_card": "rgba(19, 24, 37, 0.92)",
+    "bg_card_hover": "rgba(25, 32, 50, 0.95)",
+    "border": "rgba(148, 163, 184, 0.12)",
+    "border_hover": "rgba(148, 163, 184, 0.25)",
     "text_primary": "#e2e8f0",
-    "text_secondary": "#94a3b8",
-    "accent_cyan": "#06b6d4",
-    "accent_purple": "#8b5cf6",
-    "accent_pink": "#ec4899",
-    "accent_green": "#10b981",
-    "accent_amber": "#f59e0b",
-    "accent_red": "#ef4444",
-    "gradient_start": "#06b6d4",
-    "gradient_end": "#8b5cf6",
-    "severity_critical": "#ef4444",
-    "severity_high": "#f97316",
-    "severity_medium": "#f59e0b",
-    "severity_low": "#06b6d4",
-    "severity_info": "#10b981",
+    "text_secondary": "#7a8599",
+    "text_muted": "#4a5568",
+    "accent_cyan": "#38bdf8",
+    "accent_purple": "#a78bfa",
+    "accent_pink": "#f472b6",
+    "accent_green": "#34d399",
+    "accent_amber": "#fbbf24",
+    "accent_red": "#f87171",
+    "accent_blue": "#60a5fa",
+    "gradient_start": "#38bdf8",
+    "gradient_end": "#a78bfa",
+    "severity_critical": "#f87171",
+    "severity_high": "#fb923c",
+    "severity_medium": "#fbbf24",
+    "severity_low": "#38bdf8",
+    "severity_info": "#34d399",
 }
 
 SEVERITY_COLORS = {
@@ -40,15 +47,15 @@ SEVERITY_COLORS = {
 }
 
 ATTACK_COLORS = {
-    "BENIGN": "#10b981",
-    "DDoS": "#ef4444",
-    "DoS": "#f97316",
-    "Mirai": "#dc2626",
-    "Recon": "#06b6d4",
-    "Spoofing": "#f59e0b",
-    "BruteForce": "#8b5cf6",
-    "WebAttack": "#ec4899",
-    "Malware": "#991b1b",
+    "BENIGN": "#34d399",
+    "DDoS": "#f87171",
+    "DoS": "#fb923c",
+    "Mirai": "#ef4444",
+    "Recon": "#38bdf8",
+    "Spoofing": "#fbbf24",
+    "BruteForce": "#a78bfa",
+    "WebAttack": "#f472b6",
+    "Malware": "#b91c1c",
 }
 
 
@@ -57,209 +64,250 @@ def inject_css() -> None:
     st.markdown(
         f"""
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-        /* ── Global ──────────────────────────────────────────────────── */
+        /* ── Reset & Global ──────────────────────────────────────────── */
         html, body, [class*="css"] {{
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
             color: {COLORS["text_primary"]};
         }}
 
         .stApp {{
-            background: linear-gradient(135deg, {COLORS["bg_primary"]} 0%, #111827 50%, #0f172a 100%);
+            background: {COLORS["bg_primary"]};
         }}
 
         /* ── Sidebar ─────────────────────────────────────────────────── */
         section[data-testid="stSidebar"] {{
-            background: linear-gradient(180deg, #111827 0%, #0f172a 100%) !important;
+            background: {COLORS["bg_secondary"]} !important;
             border-right: 1px solid {COLORS["border"]};
         }}
 
         section[data-testid="stSidebar"] .stRadio label {{
-            color: {COLORS["text_primary"]} !important;
+            color: {COLORS["text_secondary"]} !important;
             font-weight: 500;
-            padding: 0.5rem 0;
-            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 8px;
+            transition: color 0.15s ease, background 0.15s ease;
+            margin-bottom: 2px;
         }}
 
         section[data-testid="stSidebar"] .stRadio label:hover {{
-            color: {COLORS["accent_cyan"]} !important;
+            color: {COLORS["text_primary"]} !important;
+            background: rgba(148, 163, 184, 0.06);
         }}
 
         /* ── Metric Cards ────────────────────────────────────────────── */
         .metric-card {{
             background: {COLORS["bg_card"]};
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
             border: 1px solid {COLORS["border"]};
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            transition: all 0.3s ease;
+            border-radius: 14px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 0.75rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
             position: relative;
-            overflow: hidden;
-        }}
-
-        .metric-card::before {{
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, {COLORS["gradient_start"]}, {COLORS["gradient_end"]});
         }}
 
         .metric-card:hover {{
-            transform: translateY(-3px);
-            box-shadow: 0 12px 40px rgba(6, 182, 212, 0.15);
-            border-color: {COLORS["accent_cyan"]};
+            border-color: {COLORS["border_hover"]};
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
         }}
 
         .metric-value {{
-            font-size: 2.2rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, {COLORS["gradient_start"]}, {COLORS["gradient_end"]});
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.25rem;
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: {COLORS["text_primary"]};
+            margin-bottom: 0.2rem;
             line-height: 1.2;
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
         }}
 
         .metric-label {{
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             color: {COLORS["text_secondary"]};
             font-weight: 500;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.6px;
         }}
 
         .metric-delta {{
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 600;
-            margin-top: 0.25rem;
+            margin-top: 0.2rem;
+        }}
+
+        .metric-icon {{
+            float: right;
+            font-size: 1.3rem;
+            opacity: 0.5;
+            margin-top: -2px;
         }}
 
         /* ── Section Headers ─────────────────────────────────────────── */
         .section-header {{
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-size: 1.15rem;
+            font-weight: 600;
             color: {COLORS["text_primary"]};
-            margin: 2rem 0 1rem 0;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid {COLORS["border"]};
+            margin: 1.75rem 0 0.75rem 0;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid {COLORS["border"]};
+            letter-spacing: -0.01em;
         }}
 
         /* ── Severity Badges ─────────────────────────────────────────── */
         .severity-badge {{
             display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
         }}
 
         .severity-critical {{
-            background: rgba(239, 68, 68, 0.2);
+            background: rgba(248, 113, 113, 0.15);
             color: {COLORS["severity_critical"]};
-            border: 1px solid rgba(239, 68, 68, 0.4);
         }}
 
         .severity-high {{
-            background: rgba(249, 115, 22, 0.2);
+            background: rgba(251, 146, 60, 0.15);
             color: {COLORS["severity_high"]};
-            border: 1px solid rgba(249, 115, 22, 0.4);
         }}
 
         .severity-medium {{
-            background: rgba(245, 158, 11, 0.2);
+            background: rgba(251, 191, 36, 0.15);
             color: {COLORS["severity_medium"]};
-            border: 1px solid rgba(245, 158, 11, 0.4);
         }}
 
         .severity-low {{
-            background: rgba(6, 182, 212, 0.2);
+            background: rgba(56, 189, 248, 0.15);
             color: {COLORS["severity_low"]};
-            border: 1px solid rgba(6, 182, 212, 0.4);
         }}
 
         .severity-info {{
-            background: rgba(16, 185, 129, 0.2);
+            background: rgba(52, 211, 153, 0.15);
             color: {COLORS["severity_info"]};
-            border: 1px solid rgba(16, 185, 129, 0.4);
         }}
 
         /* ── Tables ──────────────────────────────────────────────────── */
         .stDataFrame {{
-            border-radius: 12px;
+            border-radius: 10px;
             overflow: hidden;
         }}
 
         /* ── Buttons ─────────────────────────────────────────────────── */
         .stButton > button {{
-            background: linear-gradient(135deg, {COLORS["gradient_start"]}, {COLORS["gradient_end"]}) !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 10px !important;
+            background: {COLORS["bg_card"]} !important;
+            color: {COLORS["text_primary"]} !important;
+            border: 1px solid {COLORS["border"]} !important;
+            border-radius: 8px !important;
             font-weight: 600 !important;
-            padding: 0.5rem 1.5rem !important;
-            transition: all 0.3s ease !important;
+            padding: 0.45rem 1.25rem !important;
+            transition: border-color 0.15s ease, background 0.15s ease !important;
+            font-size: 0.85rem !important;
         }}
 
         .stButton > button:hover {{
-            transform: translateY(-2px) !important;
-            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.3) !important;
+            border-color: {COLORS["accent_cyan"]} !important;
+            background: rgba(56, 189, 248, 0.08) !important;
+        }}
+
+        .stButton > button[kind="primary"] {{
+            background: {COLORS["accent_cyan"]} !important;
+            color: {COLORS["bg_primary"]} !important;
+            border: none !important;
+            font-weight: 700 !important;
+        }}
+
+        .stButton > button[kind="primary"]:hover {{
+            background: #2da8e0 !important;
         }}
 
         /* ── Status Container ────────────────────────────────────────── */
         .status-container {{
             background: {COLORS["bg_card"]};
-            backdrop-filter: blur(16px);
             border: 1px solid {COLORS["border"]};
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            margin: 0.5rem 0;
+            border-radius: 10px;
+            padding: 0.8rem 1.2rem;
+            margin: 0.4rem 0;
         }}
 
-        /* ── Pulse Animation ─────────────────────────────────────────── */
+        /* ── Live Indicator ──────────────────────────────────────────── */
         @keyframes pulse {{
-            0% {{ opacity: 1; }}
-            50% {{ opacity: 0.5; }}
-            100% {{ opacity: 1; }}
+            0% {{ opacity: 1; transform: scale(1); }}
+            50% {{ opacity: 0.4; transform: scale(0.85); }}
+            100% {{ opacity: 1; transform: scale(1); }}
         }}
 
         .live-indicator {{
             display: inline-block;
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             background: {COLORS["accent_green"]};
             animation: pulse 2s ease-in-out infinite;
-            margin-right: 8px;
+            margin-right: 6px;
         }}
 
-        /* ── Progress/Gauge ──────────────────────────────────────────── */
-        .gauge-container {{
-            text-align: center;
-            padding: 1rem;
+        /* ── Info / Status Cards ─────────────────────────────────────── */
+        .nids-info-banner {{
+            padding: 0.7rem 1rem;
+            background: rgba(56, 189, 248, 0.06);
+            border-left: 3px solid {COLORS["accent_cyan"]};
+            border-radius: 0 8px 8px 0;
+            font-size: 0.85rem;
+            color: {COLORS["text_secondary"]};
+            margin-bottom: 1rem;
+        }}
+
+        .nids-warn-banner {{
+            padding: 0.7rem 1rem;
+            background: rgba(248, 113, 113, 0.06);
+            border-left: 3px solid {COLORS["accent_red"]};
+            border-radius: 0 8px 8px 0;
+            font-size: 0.85rem;
+            color: {COLORS["text_secondary"]};
+            margin-bottom: 1rem;
+        }}
+
+        /* ── Mono / Code Text ────────────────────────────────────────── */
+        code, .stCode, .nids-mono {{
+            font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
         }}
 
         /* ── Scrollbar ───────────────────────────────────────────────── */
         ::-webkit-scrollbar {{
-            width: 6px;
-            height: 6px;
+            width: 5px;
+            height: 5px;
         }}
         ::-webkit-scrollbar-track {{
-            background: {COLORS["bg_primary"]};
+            background: transparent;
         }}
         ::-webkit-scrollbar-thumb {{
             background: {COLORS["border"]};
             border-radius: 3px;
         }}
         ::-webkit-scrollbar-thumb:hover {{
-            background: {COLORS["accent_cyan"]};
+            background: {COLORS["text_muted"]};
         }}
+
+        /* ── Tabs styling ────────────────────────────────────────────── */
+        .stTabs [data-baseweb="tab-list"] {{
+            gap: 2px;
+        }}
+
+        .stTabs [data-baseweb="tab"] {{
+            border-radius: 8px 8px 0 0;
+            padding: 8px 20px;
+            font-weight: 500;
+        }}
+
+        /* ── Hide Streamlit chrome ───────────────────────────────────── */
+        #MainMenu {{visibility: hidden;}}
+        footer {{visibility: hidden;}}
+        header {{visibility: hidden;}}
         </style>
         """,
         unsafe_allow_html=True,
@@ -267,17 +315,19 @@ def inject_css() -> None:
 
 
 def metric_card(label: str, value: str, icon: str = "", delta: str = "", color: str = "") -> str:
-    """Return HTML for a glassmorphism metric card."""
+    """Return HTML for a metric card. Color tints the value text only."""
     delta_html = ""
     if delta:
         delta_color = COLORS["accent_green"] if not delta.startswith("-") else COLORS["accent_red"]
         delta_html = f'<div class="metric-delta" style="color: {delta_color}">{delta}</div>'
 
-    value_style = f'style="background: linear-gradient(135deg, {color}, {COLORS["gradient_end"]}); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"' if color else ""
+    value_style = f'style="color: {color};"' if color else ""
+    icon_html = f'<span class="metric-icon">{icon}</span>' if icon else ""
 
     return f"""
     <div class="metric-card">
-        <div class="metric-label">{icon} {label}</div>
+        {icon_html}
+        <div class="metric-label">{label}</div>
         <div class="metric-value" {value_style}>{value}</div>
         {delta_html}
     </div>
@@ -300,21 +350,22 @@ def section_header(title: str) -> None:
 PLOTLY_LAYOUT = dict(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(family="Inter, sans-serif", color=COLORS["text_primary"]),
+    font=dict(family="Inter, sans-serif", color=COLORS["text_primary"], size=12),
     margin=dict(l=40, r=20, t=50, b=40),
     legend=dict(
         bgcolor="rgba(0,0,0,0)",
-        bordercolor=COLORS["border"],
-        borderwidth=1,
-        font=dict(size=11),
+        borderwidth=0,
+        font=dict(size=11, color=COLORS["text_secondary"]),
     ),
     xaxis=dict(
-        gridcolor="rgba(99, 102, 241, 0.1)",
-        zerolinecolor="rgba(99, 102, 241, 0.2)",
+        gridcolor="rgba(148, 163, 184, 0.06)",
+        zerolinecolor="rgba(148, 163, 184, 0.1)",
+        tickfont=dict(color=COLORS["text_secondary"]),
     ),
     yaxis=dict(
-        gridcolor="rgba(99, 102, 241, 0.1)",
-        zerolinecolor="rgba(99, 102, 241, 0.2)",
+        gridcolor="rgba(148, 163, 184, 0.06)",
+        zerolinecolor="rgba(148, 163, 184, 0.1)",
+        tickfont=dict(color=COLORS["text_secondary"]),
     ),
 )
 

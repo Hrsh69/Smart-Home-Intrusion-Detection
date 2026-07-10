@@ -1,9 +1,9 @@
-"""🔴 Live Monitoring — Real-time network flow classification.
+"""Live Monitoring — Real-time network flow classification.
 
 Three input modes:
-- ✏️  Manual Input   — enter the 18 CIC-IoT-2023 feature values by hand
+- 📡  Live Capture   — real Scapy packet capture
 - 🎲  Simulate       — generate synthetic flows with realistic distributions
-- 📡  Live Capture   — real Scapy packet capture (Phase 4, coming soon)
+- ✏️  Manual Input   — enter the 18 CIC-IoT-2023 feature values by hand
 """
 
 from __future__ import annotations
@@ -31,8 +31,6 @@ from src.database import NIDSDatabase
 from src.predict import NIDSPredictor
 
 # ── Feature metadata for the manual input form ──────────────────────────────
-# Groups: (group_label, [(feature_name, display_label, default, fmt, help_text)])
-# Feature order matches selected_features.pkl (verified from live artifact).
 _FEATURE_GROUPS: list[tuple[str, list[tuple[str, str, float, str, str]]]] = [
     (
         "⏱️ Flow Timing",
@@ -102,8 +100,6 @@ _FEATURE_GROUPS: list[tuple[str, list[tuple[str, str, float, str, str]]]] = [
     ),
 ]
 
-# Flat ordered list of all 18 feature names — matches selected_features.pkl exactly.
-# Verified: python3 -c "import joblib; print(joblib.load('models/selected_features.pkl'))"
 ALL_FEATURES: list[str] = [feat for _, grp in _FEATURE_GROUPS for feat, *_ in grp]
 
 
@@ -112,34 +108,40 @@ def render(db: NIDSDatabase, predictor: NIDSPredictor, alert_mgr: AlertManager) 
 
     st.markdown(
         f"""
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:1.5rem;">
-            <span class="live-indicator"></span>
-            <h2 style="margin:0; font-weight:700; color:{COLORS['text_primary']};">
-                Live Network Monitor
-            </h2>
+        <div style="padding: 0.25rem 0 1rem 0;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span class="live-indicator"></span>
+                <h1 style="font-size:1.75rem; font-weight:700; color:{COLORS['text_primary']};
+                    margin:0; letter-spacing:-0.02em;">
+                    Live Monitor
+                </h1>
+            </div>
+            <p style="color:{COLORS['text_muted']}; font-size:0.85rem; margin:0.3rem 0 0 0;">
+                Real-time network flow classification
+            </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
     # ── Input Mode Tabs ──────────────────────────────────────────────────
-    tab_manual, tab_simulate, tab_live = st.tabs([
-        "✏️ Manual Input",
-        "🎲 Simulate Traffic",
+    tab_live, tab_simulate, tab_manual = st.tabs([
         "📡 Live Capture",
+        "🎲 Simulate Traffic",
+        "✏️ Manual Input",
     ])
-
-    with tab_manual:
-        _render_manual_input(db, predictor, alert_mgr)
-
-    with tab_simulate:
-        _render_simulation(db, predictor, alert_mgr)
 
     with tab_live:
         _render_live_capture(db, predictor, alert_mgr)
 
+    with tab_simulate:
+        _render_simulation(db, predictor, alert_mgr)
+
+    with tab_manual:
+        _render_manual_input(db, predictor, alert_mgr)
+
     # ── Live Feed ────────────────────────────────────────────────────────
-    section_header("📡 Recent Predictions Feed")
+    section_header("Recent Predictions")
     _render_live_feed(db)
 
 
@@ -150,19 +152,17 @@ def _render_manual_input(
     predictor: NIDSPredictor,
     alert_mgr: AlertManager,
 ) -> None:
-    """Manual entry of the 18 CIC-IoT-2023 flow features for a single prediction."""
+    """Manual entry of the 18 CIC-IoT-2023 flow features."""
     st.markdown(
-        f"<p style='color:{COLORS['text_secondary']}'>"
-        f"Enter the 18 network-flow feature values below, then click "
-        f"<strong>Classify Flow</strong>. Missing values are filled with "
-        f"training-set medians automatically.</p>",
+        f"<p style='color:{COLORS['text_secondary']}; font-size:0.85rem;'>"
+        f"Enter the 18 network-flow feature values, then click "
+        f"<strong>Classify Flow</strong>.</p>",
         unsafe_allow_html=True,
     )
 
     feature_values: dict[str, float] = {}
 
     with st.form(key="manual_input_form"):
-        # Render each feature group
         for group_label, features in _FEATURE_GROUPS:
             st.markdown(f"**{group_label}**")
             cols = st.columns(min(len(features), 3))
@@ -176,7 +176,7 @@ def _render_manual_input(
                         help=help_text,
                     )
 
-        st.markdown("**🔍 Tracking Details** *(optional)*")
+        st.markdown("**Tracking Details** *(optional)*")
         col_src, col_dst, col_dev = st.columns(3)
         with col_src:
             src_ip = st.text_input("Source IP", value="", key="manual_src_ip",
@@ -188,7 +188,7 @@ def _render_manual_input(
             device_id = st.text_input("Device ID", value="", key="manual_device_id",
                                       help="Unique device identifier (MAC or hostname).")
 
-        submit = st.form_submit_button("🔍 Classify Flow")
+        submit = st.form_submit_button("Classify Flow")
 
     if submit:
         with st.spinner("Classifying…"):
@@ -198,39 +198,39 @@ def _render_manual_input(
         col_pred, col_conf, col_sev = st.columns(3)
         with col_pred:
             st.markdown(
-                metric_card("Prediction", result.label, "🏷️",
+                metric_card("Prediction", result.label, "",
                             color=ATTACK_COLORS.get(result.label, COLORS["accent_cyan"])),
                 unsafe_allow_html=True,
             )
         with col_conf:
             st.markdown(
-                metric_card("Confidence", f"{result.confidence:.1%}", "📊",
+                metric_card("Confidence", f"{result.confidence:.1%}", "",
                             color=COLORS["accent_cyan"]),
                 unsafe_allow_html=True,
             )
         with col_sev:
             st.markdown(
-                metric_card("Severity", result.severity, "⚡",
+                metric_card("Severity", result.severity, "",
                             color=SEVERITY_COLORS.get(result.severity, COLORS["accent_cyan"])),
                 unsafe_allow_html=True,
             )
 
         # Top-3 probability bars
-        st.markdown("**Top-3 Predictions:**")
+        st.markdown("**Top-3 Predictions**")
         for cls, prob in result.top_3:
             bar_width = int(prob * 100)
             color = ATTACK_COLORS.get(cls, COLORS["text_secondary"])
             st.markdown(
                 f"""
                 <div style="display:flex; align-items:center; margin:4px 0;">
-                    <span style="width:110px; font-size:0.85rem;
+                    <span style="width:100px; font-size:0.82rem;
                                  color:{COLORS['text_primary']}">{cls}</span>
                     <div style="flex:1; background:{COLORS['bg_secondary']};
-                                border-radius:4px; height:20px; margin:0 10px;">
+                                border-radius:4px; height:18px; margin:0 10px;">
                         <div style="width:{bar_width}%; background:{color};
                                     height:100%; border-radius:4px;"></div>
                     </div>
-                    <span style="width:60px; text-align:right; font-size:0.85rem;
+                    <span style="width:50px; text-align:right; font-size:0.82rem;
                                  color:{COLORS['text_secondary']}">{prob:.1%}</span>
                 </div>
                 """,
@@ -251,7 +251,7 @@ def _render_manual_input(
         alert_mgr.process_alert(
             det_id, result.label, result.confidence, result.severity, src_ip or None
         )
-        st.toast(f"✅ Classified as **{result.label}** — saved to DB.")
+        st.toast(f"Classified as **{result.label}** — saved.")
 
 
 # ── Simulation ────────────────────────────────────────────────────────────────
@@ -261,11 +261,11 @@ def _render_simulation(
     predictor: NIDSPredictor,
     alert_mgr: AlertManager,
 ) -> None:
-    """Synthetic traffic simulation using realistic statistical distributions."""
+    """Synthetic traffic simulation."""
     st.markdown(
-        f"<p style='color:{COLORS['text_secondary']}'>"
+        f"<p style='color:{COLORS['text_secondary']}; font-size:0.85rem;'>"
         f"Generate synthetic network flows with realistic CIC-IoT-2023 "
-        f"style distributions for demonstration purposes.</p>",
+        f"distributions for demonstration.</p>",
         unsafe_allow_html=True,
     )
 
@@ -277,7 +277,7 @@ def _render_simulation(
             "Speed", ["Instant", "Fast (0.1s)", "Normal (0.5s)"], key="sim_speed"
         )
 
-    if st.button("🚀 Start Simulation", key="start_sim"):
+    if st.button("Start Simulation", key="start_sim"):
         _run_simulation(db, predictor, alert_mgr, n_flows, sim_speed)
 
 
@@ -290,29 +290,23 @@ def _synthetic_flow() -> dict[str, float]:
     urg_count = float(np.random.poisson(0.05))
 
     return {
-        # Timing
         "flow_duration": flow_dur,
         "iat": float(np.random.exponential(0.04)),
         "rate": pkt_count / flow_dur,
         "packets_per_second": pkt_count / flow_dur,
-        # Sizes
         "tot_size": tot_size,
-        "tot_sum": tot_size,                                      # alias
+        "tot_sum": tot_size,
         "avg": float(abs(np.random.normal(520, 220))),
         "max": float(np.random.randint(64, 1461)),
         "min": float(np.random.randint(40, 200)),
         "variance": float(abs(np.random.exponential(95_000))),
-        # Byte rates
         "bytes_per_packet": tot_size / pkt_count,
-        # Header
         "header_length": float(np.random.randint(200, 5_001)),
         "header_bytes_per_packet": float(abs(np.random.normal(48, 10))),
-        # TCP flags
         "rst_count": rst_count,
         "urg_count": urg_count,
         "rst_ratio": rst_count / pkt_count,
         "urg_ratio": urg_count / pkt_count,
-        # Protocol: 6=TCP (70%), 17=UDP (25%), 1=ICMP (5%)
         "protocol_type": float(np.random.choice([6, 17, 1], p=[0.70, 0.25, 0.05])),
     }
 
@@ -363,7 +357,7 @@ def _run_simulation(
 
         progress_bar.progress((i + 1) / n_flows)
         status_text.text(
-            f"Processed {i + 1}/{n_flows} flows — "
+            f"Processed {i + 1}/{n_flows} — "
             f"Latest: {result.label} ({result.confidence:.1%})"
         )
 
@@ -372,7 +366,7 @@ def _run_simulation(
 
     progress_bar.empty()
     status_text.empty()
-    st.toast(f"✅ Simulation complete — {n_flows} flows classified")
+    st.toast(f"Simulation complete — {n_flows} flows classified")
 
     with results_container:
         pred_df = pd.DataFrame(predictions)
@@ -390,11 +384,12 @@ def _display_simulation_summary(pred_df: pd.DataFrame) -> None:
             labels=dist.index.tolist(),
             values=dist.values.tolist(),
             marker=dict(colors=colors),
-            hole=0.4,
+            hole=0.5,
             textinfo="label+percent",
+            textfont=dict(size=10, color=COLORS["text_secondary"]),
         ))
         apply_plotly_theme(fig)
-        fig.update_layout(height=300, title="Attack Distribution")
+        fig.update_layout(height=300, title="Attack Distribution", showlegend=False)
         st.plotly_chart(fig, use_container_width=True)
 
     with col2:
@@ -407,12 +402,14 @@ def _display_simulation_summary(pred_df: pd.DataFrame) -> None:
             x=labels, y=vals,
             marker=dict(color=colors),
             text=vals, textposition="outside",
-            textfont=dict(color=COLORS["text_primary"]),
+            textfont=dict(color=COLORS["text_secondary"], size=11),
         ))
         apply_plotly_theme(fig)
         fig.update_layout(height=300, title="Severity Breakdown")
         st.plotly_chart(fig, use_container_width=True)
 
+
+# ── Live Capture ──────────────────────────────────────────────────────────────
 
 def _render_live_capture(
     db: NIDSDatabase,
@@ -422,24 +419,7 @@ def _render_live_capture(
     """Live Scapy packet capture tab."""
     from src.capture.sniffer import list_interfaces
 
-    # ── Privilege warning ─────────────────────────────────────
-    st.markdown(
-        f"""
-        <div style="padding:0.8rem 1rem; background:rgba(239,68,68,0.12);
-                    border-left:3px solid {COLORS['accent_red']};
-                    border-radius:6px; margin-bottom:1rem;">
-            <strong style="color:{COLORS['accent_red']}">⚠️ Root/Admin Required</strong><br>
-            <span style="color:{COLORS['text_secondary']}; font-size:0.85rem;">
-            Live capture uses raw sockets. Launch the app with
-            <code>sudo streamlit run app.py</code> on macOS/Linux, or grant
-            <code>CAP_NET_RAW + CAP_NET_ADMIN</code> to the Python binary (Phase 5).
-            </span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    # ── Interface selector ─────────────────────────────────
+    # ── Auto-detect network info ──────────────────────────
     ifaces = list_interfaces()
     iface_names = [i["name"] for i in ifaces] or ["en0"]
     iface_labels = [
@@ -447,6 +427,25 @@ def _render_live_capture(
         for i in ifaces
     ] or ["en0"]
 
+    def _get_local_ip(iface_idx: int) -> str:
+        if ifaces and iface_idx < len(ifaces):
+            return ifaces[iface_idx].get("ip", "")
+        return ""
+
+    def _get_gateway_ip() -> str:
+        try:
+            import netifaces
+            gateways = netifaces.gateways()
+            default_gw = gateways.get("default", {})
+            if netifaces.AF_INET in default_gw:
+                return default_gw[netifaces.AF_INET][0]
+        except (ImportError, KeyError, IndexError):
+            pass
+        return "192.168.1.1"
+
+    detected_gateway = _get_gateway_ip()
+
+    # ── Interface + timeout selectors ─────────────────────
     col_iface, col_timeout = st.columns(2)
     with col_iface:
         selected_idx = st.selectbox(
@@ -465,12 +464,31 @@ def _render_live_capture(
                  "CICFlowMeter default is 120 s.",
         )
 
+    local_ip = _get_local_ip(selected_idx)
+
+    # ── Network info banner ───────────────────────────────
+    st.markdown(
+        f"""
+        <div class="nids-info-banner">
+            <strong style="color:{COLORS['text_primary']}">Network</strong><br>
+            <span class="nids-mono" style="font-size:0.82rem;">
+                Your IP: <strong style="color:{COLORS['accent_cyan']}">{local_ip or 'unknown'}</strong>
+                &nbsp;·&nbsp;
+                Gateway: <strong style="color:{COLORS['accent_cyan']}">{detected_gateway}</strong>
+                &nbsp;·&nbsp;
+                Interface: <strong>{selected_iface}</strong>
+            </span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     # ── Optional ARP spoofing ─────────────────────────────
-    with st.expander("🚀 ARP Spoof (MITM) — optional", expanded=False):
+    with st.expander("ARP Spoof (MITM) — capture other devices", expanded=False):
         st.markdown(
-            f"<p style='color:{COLORS['text_secondary']}; font-size:0.85rem;'>"
-            f"Enable to route traffic from other devices through this machine for capture. "
-            f"Leave blank to capture only traffic to/from this machine.</p>",
+            f"<p style='color:{COLORS['text_secondary']}; font-size:0.82rem; margin:0;'>"
+            f"Route traffic from other devices through this machine. "
+            f"Leave blank to capture only this machine's traffic.</p>",
             unsafe_allow_html=True,
         )
         targets_raw = st.text_input(
@@ -481,11 +499,23 @@ def _render_live_capture(
         )
         gateway_ip = st.text_input(
             "Gateway IP",
-            value="192.168.1.1",
+            value=detected_gateway,
             key="live_gateway",
         )
 
     targets = [t.strip() for t in targets_raw.split(",") if t.strip()] if targets_raw else []
+
+    # ── Privilege notice ──────────────────────────────────
+    st.markdown(
+        f"""
+        <div class="nids-warn-banner" style="font-size:0.78rem;">
+            Requires elevated privileges. Run with
+            <code style="color:{COLORS['text_primary']}">sudo streamlit run app.py</code>
+            or grant <code style="color:{COLORS['text_primary']}">CAP_NET_RAW</code> capabilities.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # ── Start / Stop controls ────────────────────────────
     pipeline_key = "live_capture_pipeline"
@@ -511,10 +541,10 @@ def _render_live_capture(
                 )
                 p.start()
                 st.session_state[pipeline_key] = p
-                st.success(f"✅ Capture started on {selected_iface}")
+                st.success(f"Capture started on {selected_iface}")
                 st.rerun()
             except Exception as exc:
-                st.error(f"❌ Failed to start capture: {exc}")
+                st.error(f"Failed to start capture: {exc}")
 
     with col_stop:
         stop_disabled = not is_running
@@ -522,7 +552,7 @@ def _render_live_capture(
             if pipeline:
                 pipeline.stop()
                 st.session_state[pipeline_key] = None
-                st.info("⏹ Capture stopped.")
+                st.info("Capture stopped.")
                 st.rerun()
 
     with col_status:
@@ -531,30 +561,30 @@ def _render_live_capture(
                 f"""
                 <div style="display:flex; align-items:center; gap:8px; margin-top:0.5rem;">
                     <span class="live-indicator"></span>
-                    <span style="color:{COLORS['accent_green']}; font-weight:600;">
+                    <span style="color:{COLORS['accent_green']}; font-weight:600; font-size:0.9rem;">
                         Capturing on {pipeline.iface}
                     </span>
                 </div>
-                <p style="color:{COLORS['text_secondary']}; font-size:0.8rem; margin:4px 0 0 0;">
-                    Flows: {pipeline.flows_classified} &nbsp;|&nbsp;
-                    Threats: {pipeline.threats_detected}
-                </p>
+                <div style="color:{COLORS['text_muted']}; font-size:0.78rem;
+                            font-family:'JetBrains Mono',monospace; margin-top:4px;">
+                    flows: {pipeline.flows_classified} &nbsp;·&nbsp;
+                    threats: {pipeline.threats_detected}
+                </div>
                 """,
                 unsafe_allow_html=True,
             )
         else:
             st.markdown(
-                f"<p style='color:{COLORS['text_secondary']}; margin-top:0.5rem;'>"
-                f"⏸️ Capture stopped</p>",
+                f"<p style='color:{COLORS['text_muted']}; margin-top:0.5rem; font-size:0.85rem;'>"
+                f"Idle — press Start to begin</p>",
                 unsafe_allow_html=True,
             )
 
     # ── Live results feed ────────────────────────────────
     if is_running:
         st.markdown("---")
-        st.markdown(f"**Live Classified Flows** (auto-refreshes as flows complete)")
+        st.markdown("**Classified Flows**")
 
-        # Drain result_queue and accumulate in session_state
         live_results_key = "live_capture_results"
         if live_results_key not in st.session_state:
             st.session_state[live_results_key] = []
@@ -570,7 +600,7 @@ def _render_live_capture(
         if new_results:
             st.session_state[live_results_key] = (
                 new_results + st.session_state[live_results_key]
-            )[:100]  # keep last 100
+            )[:100]
 
         results = st.session_state.get(live_results_key, [])
         if results:
@@ -588,15 +618,13 @@ def _render_live_capture(
                 rows, use_container_width=True, hide_index=True, height=400
             )
         else:
-            st.info("🔍 Waiting for flows to complete… "
-                    "(flows are emitted after idle timeout or max packet threshold)")
+            st.info("Waiting for flows to complete…")
 
-        # Auto-rerun every 3 s while capture is active
         try:
             from streamlit_autorefresh import st_autorefresh
             st_autorefresh(interval=3000, key="live_autorefresh")
         except ImportError:
-            st.caption("⚡ Install streamlit-autorefresh for automatic updates.")
+            st.caption("Install streamlit-autorefresh for automatic updates.")
 
 
 # ── Live Feed ─────────────────────────────────────────────────────────────────

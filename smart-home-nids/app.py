@@ -66,17 +66,19 @@ def render_sidebar() -> str:
     with st.sidebar:
         st.markdown(
             f"""
-            <div style="text-align:center; padding:1.5rem 0;">
-                <div style="font-size:2.5rem; margin-bottom:0.5rem;">🛡️</div>
-                <h2 style="margin:0; font-size:1.3rem; font-weight:800;
-                    background: linear-gradient(135deg, {COLORS['gradient_start']}, {COLORS['gradient_end']});
-                    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-                    background-clip: text;">
-                    Smart Home NIDS
-                </h2>
-                <p style="color:{COLORS['text_secondary']}; font-size:0.75rem; margin:0.25rem 0 0 0;">
-                    Network Intrusion Detection
-                </p>
+            <div style="padding: 1.25rem 0.5rem 0.75rem 0.5rem;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.6rem;">🛡️</span>
+                    <div>
+                        <div style="font-size:1.1rem; font-weight:700; color:{COLORS['text_primary']};
+                                    letter-spacing:-0.02em;">
+                            Smart Home NIDS
+                        </div>
+                        <div style="font-size:0.7rem; color:{COLORS['text_muted']}; margin-top:1px;">
+                            Network Intrusion Detection
+                        </div>
+                    </div>
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -105,17 +107,20 @@ def render_sidebar() -> str:
         if predictor is not None:
             st.markdown(
                 f"""
-                <div style="padding:0.8rem; background:{COLORS['bg_card']};
-                     border-radius:10px; border:1px solid {COLORS['border']};">
-                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:0.5rem;">
+                <div style="padding:0.7rem 0.85rem; background:{COLORS['bg_card']};
+                     border-radius:8px; border:1px solid {COLORS['border']};">
+                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                         <span class="live-indicator"></span>
-                        <span style="font-size:0.8rem; color:{COLORS['accent_green']}; font-weight:600;">
+                        <span style="font-size:0.75rem; color:{COLORS['accent_green']}; font-weight:600;">
                             Model Online
                         </span>
                     </div>
-                    <p style="font-size:0.7rem; color:{COLORS['text_secondary']}; margin:0;">
-                        RF Classifier ({predictor.model_version}) • {len(predictor.feature_names)} features • {len(predictor.class_names)} classes
-                    </p>
+                    <div style="font-size:0.68rem; color:{COLORS['text_muted']}; font-family:'JetBrains Mono',monospace;">
+                        {predictor.model_version}
+                    </div>
+                    <div style="font-size:0.65rem; color:{COLORS['text_muted']}; margin-top:2px;">
+                        {len(predictor.feature_names)} features · {len(predictor.class_names)} classes
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -123,26 +128,28 @@ def render_sidebar() -> str:
         else:
             st.markdown(
                 f"""
-                <div style="padding:0.8rem; background:{COLORS['bg_card']};
-                     border-radius:10px; border:1px solid rgba(239,68,68,0.3);">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="width:10px;height:10px;border-radius:50%;background:{COLORS['accent_red']};display:inline-block;"></span>
-                        <span style="font-size:0.8rem; color:{COLORS['accent_red']}; font-weight:600;">
+                <div style="padding:0.7rem 0.85rem; background:{COLORS['bg_card']};
+                     border-radius:8px; border:1px solid rgba(248,113,113,0.2);">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="width:8px;height:8px;border-radius:50%;background:{COLORS['accent_red']};display:inline-block;"></span>
+                        <span style="font-size:0.75rem; color:{COLORS['accent_red']}; font-weight:600;">
                             Model Not Trained
                         </span>
                     </div>
-                    <p style="font-size:0.7rem; color:{COLORS['text_secondary']}; margin:0.25rem 0 0 0;">
+                    <div style="font-size:0.65rem; color:{COLORS['text_muted']}; margin-top:4px;">
                         Go to ⚙️ Settings to train
-                    </p>
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-        st.markdown("---")
         st.markdown(
-            f"<p style='text-align:center; color:{COLORS['text_secondary']}; font-size:0.65rem;'>"
-            f"Smart Home NIDS v1.0</p>",
+            f"""<div style="position:fixed; bottom:12px; left:12px;">
+                <span style="font-size:0.6rem; color:{COLORS['text_muted']};">
+                    NIDS v1.0
+                </span>
+            </div>""",
             unsafe_allow_html=True,
         )
 
